@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>决策流程 - 电商精准营销决策系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/app.css" rel="stylesheet">
+    <style>
+        .page-heading {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a2b3c;
+            margin-bottom: 0.35rem;
+        }
+        .page-sub {
+            color: #5f6368;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+        /* 时间线容器 */
+        .flow-timeline {
+            position: relative;
+            max-width: 880px;
+            margin: 0 auto;
+            padding-left: 0;
+        }
+        .flow-step {
+            display: flex;
+            gap: 1.25rem;
+            align-items: stretch;
+            margin-bottom: 0;
+        }
+        .flow-step:last-child .flow-marker-line {
+            display: none;
+        }
+        /* 左侧圆点与竖线 */
+        .flow-marker-col {
+            flex: 0 0 52px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .flow-marker-num {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1a73e8, #1557b0);
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(26, 115, 232, 0.35);
+            z-index: 2;
+            flex-shrink: 0;
+        }
+        .flow-marker-line {
+            flex: 1;
+            width: 3px;
+            min-height: 24px;
+            background: linear-gradient(180deg, #c5d9f7 0%, #a8c7f0 100%);
+            margin-top: 6px;
+            margin-bottom: 0;
+            border-radius: 2px;
+        }
+        /* 右侧卡片 */
+        .flow-card-wrap {
+            flex: 1;
+            min-width: 0;
+            padding-bottom: 1.35rem;
+        }
+        .flow-card {
+            border-radius: 14px;
+            border: 1px solid rgba(26, 115, 232, 0.12);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            cursor: pointer;
+        }
+        .flow-card:focus {
+            outline: 2px solid #1a73e8;
+            outline-offset: 2px;
+        }
+        .flow-card:hover {
+            transform: scale(1.015);
+            box-shadow: 0 8px 28px rgba(26, 115, 232, 0.18);
+        }
+        .flow-card-inner {
+            padding: 1.15rem 1.25rem 1rem;
+        }
+        .flow-step:nth-child(odd) .flow-card {
+            background: rgba(255, 255, 255, 0.92);
+        }
+        .flow-step:nth-child(even) .flow-card {
+            background: rgba(240, 246, 255, 0.95);
+        }
+        .flow-card-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: rgba(26, 115, 232, 0.1);
+            color: #1a73e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            flex-shrink: 0;
+        }
+        .flow-card-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #202124;
+            margin: 0;
+        }
+        .flow-card-desc {
+            font-size: 0.9rem;
+            color: #5f6368;
+            margin: 0.35rem 0 0;
+            line-height: 1.55;
+        }
+        .flow-detail {
+            border-top: 1px solid rgba(26, 115, 232, 0.1);
+            background: rgba(255, 255, 255, 0.65);
+        }
+        .flow-detail .card-body {
+            font-size: 0.88rem;
+            color: #3c4043;
+            line-height: 1.6;
+            padding: 0.85rem 1.25rem;
+        }
+        .flow-hint {
+            font-size: 0.8rem;
+            color: #80868b;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg app-navbar sticky-top mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/"><i class="bi bi-graph-up-arrow me-1"></i>电商精准营销决策系统</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navContent">
+            <ul class="navbar-nav ms-auto gap-1">
+                <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
+                <li class="nav-item"><a class="nav-link" href="/stats">数据统计</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/flow">决策流程</a></li>
+                <li class="nav-item"><a class="nav-link" href="/validate">预测验证</a></li>
+                <li class="nav-item"><a class="nav-link" href="/vip">会员中心</a></li>
+                <li class="nav-item"><a class="nav-link text-danger" href="/logout">退出</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="container pb-5">
+    <div class="animate-in">
+        <h1 class="page-heading">决策流程</h1>
+        <p class="page-sub">从数据上传到策略执行的全链路说明。点击各步骤卡片可展开或收起补充说明。</p>
+    </div>
+
+    <div class="flow-timeline animate-in" role="list">
+
+        <!-- 1 -->
+        <div class="flow-step" role="listitem">
+            <div class="flow-marker-col">
+                <div class="flow-marker-num">1</div>
+                <div class="flow-marker-line" aria-hidden="true"></div>
+            </div>
+            <div class="flow-card-wrap">
+                <div class="flow-card" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#flowDetail1"
+                     aria-expanded="false" aria-controls="flowDetail1">
+                    <div class="flow-card-inner d-flex gap-3">
+                        <div class="flow-card-icon"><i class="bi bi-cloud-upload" aria-hidden="true"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h2 class="flow-card-title">数据上传</h2>
+                            <p class="flow-card-desc">上传用户行为CSV数据（支持淘宝数据集格式）</p>
+                            <p class="flow-hint mb-0"><i class="bi bi-chevron-down me-1"></i>点击查看详情</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse flow-detail" id="flowDetail1">
+                    <div class="card-body border-0">支持标准CSV和淘宝UserBehavior数据集，自动格式检测</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2 -->
+        <div class="flow-step" role="listitem">
+            <div class="flow-marker-col">
+                <div class="flow-marker-num">2</div>
+                <div class="flow-marker-line" aria-hidden="true"></div>
+            </div>
+            <div class="flow-card-wrap">
+                <div class="flow-card" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#flowDetail2"
+                     aria-expanded="false" aria-controls="flowDetail2">
+                    <div class="flow-card-inner d-flex gap-3">
+                        <div class="flow-card-icon"><i class="bi bi-funnel" aria-hidden="true"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h2 class="flow-card-title">数据清洗与去重</h2>
+                            <p class="flow-card-desc">缺失值填充、重复记录去除、数据格式标准化</p>
+                            <p class="flow-hint mb-0"><i class="bi bi-chevron-down me-1"></i>点击查看详情</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse flow-detail" id="flowDetail2">
+                    <div class="card-body border-0">去重策略：userId+productId+behaviorType+behaviorTime四字段联合去重</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3 -->
+        <div class="flow-step" role="listitem">
+            <div class="flow-marker-col">
+                <div class="flow-marker-num">3</div>
+                <div class="flow-marker-line" aria-hidden="true"></div>
+            </div>
+            <div class="flow-card-wrap">
+                <div class="flow-card" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#flowDetail3"
+                     aria-expanded="false" aria-controls="flowDetail3">
+                    <div class="flow-card-inner d-flex gap-3">
+                        <div class="flow-card-icon"><i class="bi bi-gear" aria-hidden="true"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h2 class="flow-card-title">特征工程提取</h2>
+                            <p class="flow-card-desc">计算12维用户特征：浏览时长均值、加购频率、购买率等</p>
+                            <p class="flow-hint mb-0"><i class="bi bi-chevron-down me-1"></i>点击查看详情</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse flow-detail" id="flowDetail3">
+                    <div class="card-body border-0">特征包括：browse_duration_avg, cart_frequency, purchase_rate, review_score_avg, product_hot_level等12维</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4 -->
+        <div class="flow-step" role="listitem">
+            <div class="flow-marker-col">
+                <div class="flow-marker-num">4</div>
+                <div class="flow-marker-line" aria-hidden="true"></div>
+            </div>
+            <div class="flow-card-wrap">
+                <div class="flow-card" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#flowDetail4"
+                     aria-expanded="false" aria-controls="flowDetail4">
+                    <div class="flow-card-inner d-flex gap-3">
+                        <div class="flow-card-icon"><i class="bi bi-cpu" aria-hidden="true"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h2 class="flow-card-title">模型训练</h2>
+                            <p class="flow-card-desc">使用8.2万条模拟数据训练随机森林/逻辑回归/朴素贝叶斯</p>
+                            <p class="flow-hint mb-0"><i class="bi bi-chevron-down me-1"></i>点击查看详情</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse flow-detail" id="flowDetail4">
+                    <div class="card-body border-0">7:3训练/测试集拆分，随机森林100棵树，预期准确率约78.6%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5 -->
+        <div class="flow-step" role="listitem">
+            <div class="flow-marker-col">
+                <div class="flow-marker-num">5</div>
+                <div class="flow-marker-line" aria-hidden="true"></div>
+            </div>
+            <div class="flow-card-wrap">
+                <div class="flow-card" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#flowDetail5"
+                     aria-expanded="false" aria-controls="flowDetail5">
+                    <div class="flow-card-inner d-flex gap-3">
+                        <div class="flow-card-icon"><i class="bi bi-lightning" aria-hidden="true"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h2 class="flow-card-title">购买意愿预测</h2>
+                            <p class="flow-card-desc">对目标用户进行购买意愿0/1二分类预测</p>
+                            <p class="flow-hint mb-0"><i class="bi bi-chevron-down me-1"></i>点击查看详情</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse flow-detail" id="flowDetail5">
+                    <div class="card-body border-0">模型输出购买概率，超过阈值(默认0.5)判定为愿意购买</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6 -->
+        <div class="flow-step" role="listitem">
+            <div class="flow-marker-col">
+                <div class="flow-marker-num">6</div>
+                <div class="flow-marker-line" aria-hidden="true"></div>
+            </div>
+            <div class="flow-card-wrap">
+                <div class="flow-card" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#flowDetail6"
+                     aria-expanded="false" aria-controls="flowDetail6">
+                    <div class="flow-card-inner d-flex gap-3">
+                        <div class="flow-card-icon"><i class="bi bi-people" aria-hidden="true"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h2 class="flow-card-title">用户分群（KMeans K=3）</h2>
+                            <p class="flow-card-desc">基于特征将用户聚类为高/中/低意向三个群体</p>
+                            <p class="flow-hint mb-0"><i class="bi bi-chevron-down me-1"></i>点击查看详情</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse flow-detail" id="flowDetail6">
+                    <div class="card-body border-0">SimpleKMeans算法，以purchase_rate为主要聚类依据划分三个簇</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7 -->
+        <div class="flow-step" role="listitem">
+            <div class="flow-marker-col">
+                <div class="flow-marker-num">7</div>
+                <div class="flow-marker-line" aria-hidden="true"></div>
+            </div>
+            <div class="flow-card-wrap">
+                <div class="flow-card" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#flowDetail7"
+                     aria-expanded="false" aria-controls="flowDetail7">
+                    <div class="flow-card-inner d-flex gap-3">
+                        <div class="flow-card-icon"><i class="bi bi-megaphone" aria-hidden="true"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h2 class="flow-card-title">精准营销策略生成</h2>
+                            <p class="flow-card-desc">根据意向分群匹配差异化营销策略</p>
+                            <p class="flow-hint mb-0"><i class="bi bi-chevron-down me-1"></i>点击查看详情</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse flow-detail" id="flowDetail7">
+                    <div class="card-body border-0">高意向→限时折扣+优先发货；中意向→详情页+评价推送；低意向→优惠券+新品试用</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8 -->
+        <div class="flow-step" role="listitem">
+            <div class="flow-marker-col">
+                <div class="flow-marker-num">8</div>
+                <div class="flow-marker-line" aria-hidden="true"></div>
+            </div>
+            <div class="flow-card-wrap">
+                <div class="flow-card" role="button" tabindex="0" data-bs-toggle="collapse" data-bs-target="#flowDetail8"
+                     aria-expanded="false" aria-controls="flowDetail8">
+                    <div class="flow-card-inner d-flex gap-3">
+                        <div class="flow-card-icon"><i class="bi bi-send" aria-hidden="true"></i></div>
+                        <div class="flex-grow-1 min-w-0">
+                            <h2 class="flow-card-title">策略推送执行</h2>
+                            <p class="flow-card-desc">限时折扣、评价推送、优惠券等精准投放</p>
+                            <p class="flow-hint mb-0"><i class="bi bi-chevron-down me-1"></i>点击查看详情</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse flow-detail" id="flowDetail8">
+                    <div class="card-body border-0">策略结果可导出，支持按用户维度查看个性化推荐方案</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<footer class="app-footer">
+    电商精准营销决策系统
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        document.querySelectorAll('.flow-card[data-bs-toggle="collapse"]').forEach(function (card) {
+            var targetSel = card.getAttribute('data-bs-target');
+            if (!targetSel) return;
+            var el = document.querySelector(targetSel);
+            if (!el) return;
+            el.addEventListener('shown.bs.collapse', function () { card.setAttribute('aria-expanded', 'true'); });
+            el.addEventListener('hidden.bs.collapse', function () { card.setAttribute('aria-expanded', 'false'); });
+        });
+    })();
+</script>
+</body>
+</html>

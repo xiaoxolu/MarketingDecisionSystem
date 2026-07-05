@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>会员中心 - 电商精准营销决策系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/app.css" rel="stylesheet">
+    <style>
+        .table thead th {
+            background: #f0f4ff;
+            color: #333;
+            font-weight: 600;
+            border: none;
+        }
+        .table tbody td {
+            vertical-align: middle;
+        }
+        .plan-card-free {
+            border-top: 4px solid #adb5bd !important;
+        }
+        .plan-card-month {
+            border-top: 4px solid #1a73e8 !important;
+        }
+        .plan-card-year {
+            border-top: 4px solid #f4a100 !important;
+        }
+        .plan-price-free { color: #6c757d; }
+        .plan-price-month { color: #1a73e8; font-weight: 700; }
+        .plan-price-year { color: #b45309; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg app-navbar sticky-top mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/"><i class="bi bi-graph-up-arrow me-1"></i>电商精准营销决策系统</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navContent">
+            <ul class="navbar-nav ms-auto gap-1">
+                <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
+                <li class="nav-item"><a class="nav-link" href="/stats">数据统计</a></li>
+                <li class="nav-item"><a class="nav-link" href="/flow">决策流程</a></li>
+                <li class="nav-item"><a class="nav-link" href="/validate">预测验证</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/vip">会员中心</a></li>
+                <li class="nav-item"><a class="nav-link text-danger" href="/logout">退出</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-4" th:object="${user}">
+
+    <div th:if="${msg}" class="alert" th:classappend="'alert-' + ${msgType}" role="alert">
+        <i class="bi bi-info-circle me-1"></i> <span th:text="${msg}"></span>
+    </div>
+
+    <div class="app-card p-4 mb-4 animate-in">
+        <div class="app-section-title"><i class="bi bi-person-badge"></i> 当前账户</div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">用户名</div>
+                <div class="fw-semibold" th:text="*{username}">—</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">当前余额</div>
+                <div class="fw-semibold"><span th:text="*{#numbers.formatDecimal(balance, 1, 2)}">0.00</span> 元</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">会员等级</div>
+                <div class="fw-semibold" th:switch="*{effectiveVipLevel}">
+                    <span th:case="0">免费用户</span>
+                    <span th:case="1">月度会员</span>
+                    <span th:case="2">年度会员</span>
+                    <span th:case="*">免费用户</span>
+                </div>
+            </div>
+            <div class="col-md-3" th:if="*{isVipActive()}">
+                <div class="text-muted small">到期时间</div>
+                <div class="fw-semibold" th:text="*{#temporals.format(vipExpireTime, 'yyyy-MM-dd HH:mm')}">—</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-card p-4 mb-4 animate-in">
+        <div class="app-section-title"><i class="bi bi-wallet2"></i> 账户充值</div>
+        <form class="row g-3 align-items-end" method="post" th:action="@{/recharge}">
+            <div class="col-md-4 col-lg-3">
+                <label for="rechargeAmount" class="form-label text-muted">充值金额（元）</label>
+                <input class="form-control" type="number" name="amount" id="rechargeAmount" min="1" step="1" required placeholder="请输入金额">
+            </div>
+            <div class="col-md-8 col-lg-9">
+                <span class="text-muted small me-2 d-block d-md-inline mb-2 mb-md-0">快捷金额：</span>
+                <button type="button" class="btn btn-outline-secondary btn-sm me-1" onclick="document.getElementById('rechargeAmount').value='100'">100</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm me-1" onclick="document.getElementById('rechargeAmount').value='500'">500</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm me-3" onclick="document.getElementById('rechargeAmount').value='1000'">1000</button>
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-cash-coin me-1"></i> 确认充值
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="app-section-title mt-2 animate-in"><i class="bi bi-stars"></i> 订阅方案</div>
+    <div class="row g-4 mb-4 animate-in">
+        <div class="col-lg-4">
+            <div class="app-card p-4 h-100 plan-card-free bg-light bg-opacity-50 animate-in">
+                <h5 class="text-secondary">免费用户</h5>
+                <p class="plan-price-free display-6 fs-3 mb-3">0 元</p>
+                <ul class="list-unstyled small text-muted mb-4">
+                    <li class="mb-2"><i class="bi bi-check2 text-secondary me-1"></i> 数据上传</li>
+                    <li class="mb-2"><i class="bi bi-check2 text-secondary me-1"></i> 基本统计</li>
+                    <li class="mb-2"><i class="bi bi-check2 text-secondary me-1"></i> 单算法预测</li>
+                    <li class="mb-2"><i class="bi bi-check2 text-secondary me-1"></i> 决策流程图</li>
+                </ul>
+                <div class="mt-auto text-muted small">当前默认可用功能</div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="app-card p-4 h-100 plan-card-month animate-in">
+                <h5 class="text-primary">月度会员</h5>
+                <p class="plan-price-month display-6 fs-3 mb-3">99 元 / 月</p>
+                <ul class="list-unstyled small mb-4">
+                    <li class="mb-2"><i class="bi bi-check2-circle text-primary me-1"></i> 含免费版全部功能</li>
+                    <li class="mb-2"><i class="bi bi-check2-circle text-primary me-1"></i> 多算法对比</li>
+                    <li class="mb-2"><i class="bi bi-check2-circle text-primary me-1"></i> 数据导出</li>
+                </ul>
+                <form method="post" th:action="@{/subscribe}" class="mt-auto">
+                    <input type="hidden" name="planType" value="1">
+                    <button type="submit" class="btn btn-primary w-100">订阅月度会员</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="app-card p-4 h-100 plan-card-year animate-in" style="background: linear-gradient(180deg, #fffbeb 0%, #ffffff 40%);">
+                <h5 class="text-warning" style="color: #b45309 !important;">年度会员</h5>
+                <p class="plan-price-year display-6 fs-3 mb-3">899 元 / 年</p>
+                <ul class="list-unstyled small mb-4">
+                    <li class="mb-2"><i class="bi bi-check2-circle text-warning me-1" style="color: #d97706 !important;"></i> 含月度版全部功能</li>
+                    <li class="mb-2"><i class="bi bi-check2-circle text-warning me-1" style="color: #d97706 !important;"></i> 预测验证</li>
+                    <li class="mb-2"><i class="bi bi-check2-circle text-warning me-1" style="color: #d97706 !important;"></i> 参数调优</li>
+                    <li class="mb-2"><i class="bi bi-check2-circle text-warning me-1" style="color: #d97706 !important;"></i> 高级图表</li>
+                </ul>
+                <form method="post" th:action="@{/subscribe}" class="mt-auto">
+                    <input type="hidden" name="planType" value="2">
+                    <button type="submit" class="btn w-100 text-white" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">订阅年度会员</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-card p-4 mb-4 animate-in">
+        <div class="app-section-title"><i class="bi bi-table"></i> 功能对比</div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-center">
+                <thead>
+                <tr>
+                    <th class="text-start">功能</th>
+                    <th>免费用户</th>
+                    <th>月度会员</th>
+                    <th>年度会员</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td class="text-start fw-medium">数据上传</td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                </tr>
+                <tr>
+                    <td class="text-start fw-medium">基本统计</td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                </tr>
+                <tr>
+                    <td class="text-start fw-medium">单算法预测</td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                </tr>
+                <tr>
+                    <td class="text-start fw-medium">多算法对比</td>
+                    <td><i class="bi bi-x-lg text-secondary"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                </tr>
+                <tr>
+                    <td class="text-start fw-medium">决策流程图</td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                </tr>
+                <tr>
+                    <td class="text-start fw-medium">数据导出</td>
+                    <td><i class="bi bi-x-lg text-secondary"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                </tr>
+                <tr>
+                    <td class="text-start fw-medium">预测验证</td>
+                    <td><i class="bi bi-x-lg text-secondary"></i></td>
+                    <td><i class="bi bi-x-lg text-secondary"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                </tr>
+                <tr>
+                    <td class="text-start fw-medium">参数调优</td>
+                    <td><i class="bi bi-x-lg text-secondary"></i></td>
+                    <td><i class="bi bi-x-lg text-secondary"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                </tr>
+                <tr>
+                    <td class="text-start fw-medium">高级图表</td>
+                    <td><i class="bi bi-x-lg text-secondary"></i></td>
+                    <td><i class="bi bi-x-lg text-secondary"></i></td>
+                    <td><i class="bi bi-check-lg text-success"></i></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<footer class="app-footer">
+    电商精准营销决策系统
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
